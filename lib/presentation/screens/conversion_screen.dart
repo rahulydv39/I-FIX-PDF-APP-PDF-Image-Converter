@@ -229,13 +229,16 @@ class _ConversionScreenContentState extends State<_ConversionScreenContent> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Progress Indicator
-          const Center(
+          Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 12),
-                Text("Optimizing file size..."),
+                if (state.hasError)
+                  const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 48)
+                else
+                  const CircularProgressIndicator(),
+                const SizedBox(height: 12),
+                if (!state.hasError) const Text("Optimizing file size..."),
               ],
             ),
           ),
@@ -264,18 +267,20 @@ class _ConversionScreenContentState extends State<_ConversionScreenContent> {
           const SizedBox(height: 40),
 
           // Cancel Button
-          if (state.isConverting)
+          if (state.isConverting || state.hasError)
             TextButton.icon(
               onPressed: () {
-                context
-                    .read<PdfConversionBloc>()
-                    .add(const CancelConversion());
+                if (state.isConverting) {
+                  context
+                      .read<PdfConversionBloc>()
+                      .add(const CancelConversion());
+                }
                 Navigator.pop(context);
               },
-              icon: const Icon(Icons.close_rounded),
-              label: const Text('Cancel'),
+              icon: Icon(state.hasError ? Icons.arrow_back_rounded : Icons.close_rounded),
+              label: Text(state.hasError ? 'Go Back' : 'Cancel'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondaryDark,
+                foregroundColor: state.hasError ? AppColors.error : AppColors.textSecondaryDark,
               ),
             ),
         ],

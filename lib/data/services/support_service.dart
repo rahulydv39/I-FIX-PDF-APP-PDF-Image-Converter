@@ -7,8 +7,8 @@ class SupportService {
   final InAppReview _inAppReview = InAppReview.instance;
 
   /// Support contact details
-  static const String supportEmail = 'rahulyadav969102@gmail.com';
-  static const String supportPhone = '+919504356783'; // Normalized for tel: scheme
+  static const String supportEmail = 'ifixpdf.support@gmail.com';
+  /// static const String supportPhone = '+919504356783'; // Normalized for tel: scheme
 
   /// Request app review or open store listing
   Future<void> rateApp() async {
@@ -52,22 +52,7 @@ class SupportService {
   }
 
   /// Call support number
-  Future<void> callSupport() async {
-    final Uri telLaunchUri = Uri(
-      scheme: 'tel',
-      path: supportPhone,
-    );
 
-    try {
-      if (await canLaunchUrl(telLaunchUri)) {
-        await launchUrl(telLaunchUri);
-      } else {
-        debugPrint('Could not launch dialer');
-      }
-    } catch (e) {
-      debugPrint('Error launching dialer: $e');
-    }
-  }
 
   // Helper to encode query parameters properly
   String? _encodeQueryParameters(Map<String, String> params) {

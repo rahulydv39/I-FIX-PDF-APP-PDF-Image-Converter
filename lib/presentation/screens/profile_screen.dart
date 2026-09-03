@@ -389,7 +389,7 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 16),
           const Center(
             child: Text(
-              'Version 1.0.0',
+              'Version 1.0.1+6',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondaryDark,
@@ -884,7 +884,7 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 6),
                     const Text(
                       'For privacy questions or data deletion requests:\n'
-                      'rahulyadav969102@gmail.com',
+                      'ifixpdf.support@gmail.com',
                       style: TextStyle(
                         color: AppColors.textSecondaryDark,
                         fontSize: 13,
@@ -1062,7 +1062,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               subtitle: const Text(
-                'rahulyadav969102@gmail.com',
+                'ifixpdf.support@gmail.com',
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondaryDark),
               ),
               onTap: () {
@@ -1073,34 +1073,7 @@ class ProfileScreen extends StatelessWidget {
             
             const SizedBox(height: 12),
             
-            // Phone Support
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.phone_rounded, color: AppColors.secondary),
-              ),
-              title: const Text(
-                'Call Support',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimaryDark,
-                ),
-              ),
-              subtitle: const Text(
-                '+91 9504356783',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondaryDark),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                sl<SupportService>().callSupport();
-              },
-            ),
             
-            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -1191,7 +1164,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               Text(
                 'For questions about these terms:\n'
-                'legal@fileconverter.app',
+                'ifixpdf.support@gmail.com',
               ),
             ],
           ),

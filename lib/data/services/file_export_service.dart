@@ -71,6 +71,7 @@ class FileExportService {
     required String mimeType,
     ExportFileType fileType = ExportFileType.image,
     String? subFolder,
+    bool ensureUniqueFilename = false,
   }) async {
     print('📁 EXPORTING FILE: $filename');
     print('   MIME: $mimeType');
@@ -87,8 +88,27 @@ class FileExportService {
       print('   📁 Created directory: $directory');
     }
 
+    // ── STEP 2.5: Ensure unique filename if requested ───────────────────────
+    String finalFilename = filename;
+    if (ensureUniqueFilename) {
+      int counter = 1;
+      File checkFile = File('$directory/$finalFilename');
+      while (await checkFile.exists()) {
+        final int extIndex = filename.lastIndexOf('.');
+        if (extIndex != -1 && extIndex != 0) {
+          final nameWithoutExt = filename.substring(0, extIndex);
+          final ext = filename.substring(extIndex);
+          finalFilename = '$nameWithoutExt ($counter)$ext';
+        } else {
+          finalFilename = '$filename ($counter)';
+        }
+        checkFile = File('$directory/$finalFilename');
+        counter++;
+      }
+    }
+
     // ── STEP 3: Write file ───────────────────────────────────────────────────
-    final path = '$directory/$filename';
+    final path = '$directory/$finalFilename';
     final file = File(path);
     await file.writeAsBytes(bytes, flush: true);
 

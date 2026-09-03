@@ -138,6 +138,7 @@ class PdfGeneratorService {
       mimeType: 'application/pdf',
       fileType: fileType,
       subFolder: subFolder,
+      ensureUniqueFilename: true,
     );
 
     stopwatch.stop();

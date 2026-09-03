@@ -12,6 +12,14 @@
 .swiftpm/
 migrate_working_dir/
 
+*.pem
+*.jks
+*.keystore
+key.properties
+
+# Kiro / Doraemon extension
+.kiro/
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -43,3 +51,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Signing / certificates
+*.pem
+*.jks
+*.keystore
+key.properties
+
+# Kiro / Doraemon extension
+.kiro/

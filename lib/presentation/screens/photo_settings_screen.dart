@@ -40,7 +40,7 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: 'converted_file');
+    _nameCtrl = TextEditingController(text: 'I_FIX_PDF');
   }
 
   @override
@@ -137,7 +137,7 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
                 controller: _nameCtrl,
                 style: const TextStyle(color: AppColors.textPrimaryDark),
                 decoration: InputDecoration(
-                  hintText: 'converted_file',
+                  hintText: 'I_FIX_PDF',
                   hintStyle: const TextStyle(color: AppColors.textSecondaryDark),
                   filled: true,
                   fillColor: AppColors.backgroundLight,

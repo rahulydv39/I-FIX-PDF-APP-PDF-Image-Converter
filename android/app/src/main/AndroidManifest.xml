@@ -8,8 +8,6 @@
     
     <!-- File storage permissions -->
     <!-- Android 13+ (API 33+) - Granular media permissions -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
     
     <!-- Android 10-12 (API 29-32) - Scoped storage -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>

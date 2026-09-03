@@ -48,7 +48,7 @@ class _PdfMergeScreenState extends State<PdfMergeScreen> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: 'converted_file');
+    _nameCtrl = TextEditingController(text: 'I_FIX_PDF');
 
     // Pre-load both ads so they are ready when the user needs them
     _inlineAdController = BannerAdController(
@@ -159,7 +159,7 @@ class _PdfMergeScreenState extends State<PdfMergeScreen> {
                 controller: _nameCtrl,
                 style: const TextStyle(color: AppColors.textPrimaryDark),
                 decoration: InputDecoration(
-                  hintText: 'converted_file',
+                  hintText: 'I_FIX_PDF',
                   hintStyle: const TextStyle(color: AppColors.textSecondaryDark),
                   filled: true,
                   fillColor: AppColors.backgroundLight,

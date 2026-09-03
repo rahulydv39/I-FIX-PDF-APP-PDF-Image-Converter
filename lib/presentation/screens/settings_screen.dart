@@ -39,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: 'converted_file');
+    _nameCtrl = TextEditingController(text: 'I_FIX_PDF');
   }
 
   @override
@@ -135,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 controller: _nameCtrl,
                 style: const TextStyle(color: AppColors.textPrimaryDark),
                 decoration: InputDecoration(
-                  hintText: 'converted_file',
+                  hintText: 'I_FIX_PDF',
                   hintStyle: const TextStyle(color: AppColors.textSecondaryDark),
                   filled: true,
                   fillColor: AppColors.backgroundLight,
