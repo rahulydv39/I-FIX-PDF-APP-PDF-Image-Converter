@@ -1,30 +1,35 @@
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:in_app_review/in_app_review.dart';
 
 /// Service for handling support, rating, and external links
 class SupportService {
-  final InAppReview _inAppReview = InAppReview.instance;
 
   /// Support contact details
   static const String supportEmail = 'ifixpdf.support@gmail.com';
   /// static const String supportPhone = '+919504356783'; // Normalized for tel: scheme
 
+  /// Application ID on Google Play Store
+  static const String appId = 'com.fileconverter.file_converter';
+
   /// Request app review or open store listing
   Future<void> rateApp() async {
+    final nativePlayStoreUri = Uri.parse('market://details?id=$appId');
+    final webPlayStoreUri = Uri.parse('https://play.google.com/store/apps/details?id=$appId');
+
     try {
-      if (await _inAppReview.isAvailable()) {
-        await _inAppReview.requestReview();
+      if (await canLaunchUrl(nativePlayStoreUri)) {
+        await launchUrl(nativePlayStoreUri, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrl(webPlayStoreUri)) {
+        await launchUrl(webPlayStoreUri, mode: LaunchMode.externalApplication);
       } else {
-        await _inAppReview.openStoreListing();
+        debugPrint('Could not launch Play Store URL');
       }
     } catch (e) {
-      debugPrint('Error rating app: $e');
-      // Fallback to opening store listing if requestReview fails
+      debugPrint('Error launching native market URL, falling back to web: $e');
       try {
-         await _inAppReview.openStoreListing();
-      } catch (e) {
-         debugPrint('Error opening store listing: $e');
+        await launchUrl(webPlayStoreUri, mode: LaunchMode.externalApplication);
+      } catch (err) {
+        debugPrint('Error launching web Play Store URL: $err');
       }
     }
   }

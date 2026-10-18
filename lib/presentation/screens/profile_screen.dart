@@ -389,7 +389,7 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 16),
           const Center(
             child: Text(
-              'Version 1.0.1+6',
+              'Version 1.0.1+11',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondaryDark,
@@ -717,8 +717,9 @@ class ProfileScreen extends StatelessWidget {
       builder: (ctx) => FutureBuilder<int>(
         future: settingsService.getStorageUsage(),
         builder: (context, snapshot) {
+          final isLoading = snapshot.connectionState == ConnectionState.waiting;
           final bytes = snapshot.data ?? 0;
-          final formattedSize = settingsService.formatBytes(bytes);
+          final formattedSize = isLoading ? 'Calculating...' : settingsService.formatBytes(bytes);
           
           return AlertDialog(
             title: const Text('Storage Usage'),
@@ -731,10 +732,20 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  formattedSize,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                  )
+                else
+                  Text(
+                    formattedSize,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
                 const SizedBox(height: 16),
                 const Text(
                   'This includes all converted files and app data.',

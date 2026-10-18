@@ -1,7 +1,7 @@
 name: file_converter
 description: "Image to PDF Converter & Image Resizer - Convert images to PDF with DPI control and size optimization"
 publish_to: 'none'
-version: 1.0.1+9
+version: 1.0.1+11
 
 environment:
   sdk: ^3.7.0

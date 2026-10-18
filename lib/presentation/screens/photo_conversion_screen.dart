@@ -98,7 +98,7 @@ class _PhotoConversionScreenContentState
     await adsService.showAdIfNeeded(isTargetSizeUsed: isTargetSizeUsed);
 
     if (!mounted) return;
-    final images = context.read<ImageSelectionBloc>().state.images;
+    final images = context.read<ImageSelectionBloc>().state.images.take(1).toList();
 
     context.read<ImageConversionBloc>().add(StartImageConversion(
           images: images,
@@ -111,14 +111,34 @@ class _PhotoConversionScreenContentState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      appBar: AppBar(
-        title: const Text('Converting'),
-        backgroundColor: AppColors.backgroundDark,
-        automaticallyImplyLeading: false,
-      ),
-      body: _showAdPrompt ? _buildAdPrompt() : _buildConversionProgress(),
+    return BlocBuilder<ImageConversionBloc, ImageConversionState>(
+      builder: (context, conversionState) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            if (conversionState.isCompleted) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            } else {
+              if (conversionState.isConverting) {
+                context
+                    .read<ImageConversionBloc>()
+                    .add(const CancelImageConversion());
+              }
+              Navigator.pop(context);
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.backgroundDark,
+            appBar: AppBar(
+              title: const Text('Converting'),
+              backgroundColor: AppColors.backgroundDark,
+              automaticallyImplyLeading: false,
+            ),
+            body: _showAdPrompt ? _buildAdPrompt() : _buildConversionProgress(),
+          ),
+        );
+      },
     );
   }
 

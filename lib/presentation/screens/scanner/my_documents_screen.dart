@@ -67,37 +67,47 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _bloc,
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        body: BlocListener<ScannerBloc, ScannerState>(
-          listener: (ctx, state) {
-            if (state is ScannerError) {
-              ScaffoldMessenger.of(ctx)
-                  .showSnackBar(SnackBar(content: Text(state.message)));
-            }
-          },
-          child: NestedScrollView(
-            headerSliverBuilder: (ctx, _) => [_buildSliverAppBar(ctx)],
-            body: BlocBuilder<ScannerBloc, ScannerState>(
-              builder: (ctx, state) {
-                if (state is ScannerLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state is SearchResultState) {
-                  return _buildSearchResults(ctx, state);
-                }
-                if (state is DocumentsLoadedState) {
-                  return _buildDocumentList(ctx, state);
-                }
-                return const Center(
-                  child: Text('Tap + to scan your first document',
-                      style: TextStyle(color: AppColors.textSecondaryDark)),
-                );
-              },
+      child: PopScope(
+        canPop: _activeFolderId == null,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          if (_activeFolderId != null) {
+            setState(() => _activeFolderId = null);
+            _bloc.add(const LoadDocumentsEvent());
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundDark,
+          body: BlocListener<ScannerBloc, ScannerState>(
+            listener: (ctx, state) {
+              if (state is ScannerError) {
+                ScaffoldMessenger.of(ctx)
+                    .showSnackBar(SnackBar(content: Text(state.message)));
+              }
+            },
+            child: NestedScrollView(
+              headerSliverBuilder: (ctx, _) => [_buildSliverAppBar(ctx)],
+              body: BlocBuilder<ScannerBloc, ScannerState>(
+                builder: (ctx, state) {
+                  if (state is ScannerLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (state is SearchResultState) {
+                    return _buildSearchResults(ctx, state);
+                  }
+                  if (state is DocumentsLoadedState) {
+                    return _buildDocumentList(ctx, state);
+                  }
+                  return const Center(
+                    child: Text('Tap + to scan your first document',
+                        style: TextStyle(color: AppColors.textSecondaryDark)),
+                  );
+                },
+              ),
             ),
           ),
+          floatingActionButton: _buildFAB(context),
         ),
-        floatingActionButton: _buildFAB(context),
       ),
     );
   }

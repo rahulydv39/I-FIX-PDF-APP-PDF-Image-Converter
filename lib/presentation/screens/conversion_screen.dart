@@ -103,14 +103,34 @@ class _ConversionScreenContentState extends State<_ConversionScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      appBar: AppBar(
-        title: const Text('Converting'),
-        backgroundColor: AppColors.backgroundDark,
-        automaticallyImplyLeading: false,
-      ),
-      body: _buildConversionProgress(),
+    return BlocBuilder<PdfConversionBloc, PdfConversionState>(
+      builder: (context, conversionState) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            if (conversionState.isCompleted) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            } else {
+              if (conversionState.isConverting) {
+                context
+                    .read<PdfConversionBloc>()
+                    .add(const CancelConversion());
+              }
+              Navigator.pop(context);
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.backgroundDark,
+            appBar: AppBar(
+              title: const Text('Converting'),
+              backgroundColor: AppColors.backgroundDark,
+              automaticallyImplyLeading: false,
+            ),
+            body: _buildConversionProgress(),
+          ),
+        );
+      },
     );
   }
 

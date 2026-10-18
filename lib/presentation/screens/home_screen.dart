@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/di/injection_container.dart';
-import '../../core/utils/permission_handler_utils.dart';
 import '../../domain/entities/conversion_mode.dart';
 import '../../data/services/walkthrough_service.dart';
 import '../bloc/image_selection/image_selection_bloc.dart';
@@ -220,6 +219,14 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           setState(() {
             _selectedMode = mode;
+            if (mode == ConversionType.imageToImage) {
+              final images = context.read<ImageSelectionBloc>().state.images;
+              if (images.length > 1) {
+                final first = images.first;
+                context.read<ImageSelectionBloc>().add(const ClearImages());
+                context.read<ImageSelectionBloc>().add(AddImages([first]));
+              }
+            }
           });
         },
         child: AnimatedContainer(
@@ -603,16 +610,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Pick images from gallery — requests storage permission first.
+  /// Pick images from gallery.
+  ///
+  /// The `image_picker` plugin uses the Android system Photo Picker on
+  /// API 33+ which grants access only to user-selected photos — no
+  /// runtime permission is required. On older versions the picker also
+  /// handles permissions internally. We therefore skip the manual
+  /// permission check to avoid blocking selection when READ_MEDIA_IMAGES
+  /// is intentionally removed from the manifest.
   void _pickImages(BuildContext context) async {
-    // ── Storage / Gallery permission check ────────────────────────
-    // Permission is only requested when the user explicitly taps
-    // "Add Images". A rationale dialog explains the purpose first.
-    final granted =
-        await PermissionHandlerUtils.requestStoragePermission(context);
-    if (!granted || !context.mounted) return;
-    // ─────────────────────────────────────────────────────
-    context.read<ImageSelectionBloc>().add(const PickMultipleImages());
+    if (_selectedMode == ConversionType.imageToImage) {
+      // Photo to Photo: single image only (Issue #6)
+      context.read<ImageSelectionBloc>().add(const ClearImages());
+      context.read<ImageSelectionBloc>().add(const PickSingleImage());
+    } else {
+      // Photo to PDF: multiple images allowed
+      context.read<ImageSelectionBloc>().add(const PickMultipleImages());
+    }
   }
 
   /// Clear all images
@@ -647,6 +661,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_selectedMode == ConversionType.imageToPdf) {
       settingsScreen = const SettingsScreen();
     } else {
+      final currentImages = context.read<ImageSelectionBloc>().state.images;
+      if (currentImages.length > 1) {
+        final firstImage = currentImages.first;
+        context.read<ImageSelectionBloc>().add(const ClearImages());
+        context.read<ImageSelectionBloc>().add(AddImages([firstImage]));
+      }
       settingsScreen = const PhotoSettingsScreen();
     }
 

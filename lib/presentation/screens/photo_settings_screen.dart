@@ -30,6 +30,12 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
   final _widthController = TextEditingController();
   final _heightController = TextEditingController();
 
+  // Guard against recursive dimension updates when aspect ratio is locked
+  bool _isUpdatingDimensions = false;
+
+  // Original aspect ratio from the selected image (width / height)
+  double? _originalAspectRatio;
+
   // Target size state
   bool _enableSizeTarget = false;
   int _selectedTargetSizeKb = TargetSizeConfig.defaultSizeKb;
@@ -41,6 +47,28 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
   void initState() {
     super.initState();
     _nameCtrl = TextEditingController(text: 'I_FIX_PDF');
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_originalAspectRatio == null) {
+      final images = context.read<ImageSelectionBloc>().state.images;
+      if (images.isNotEmpty) {
+        final img = images.first;
+        if (img.height > 0) {
+          _originalAspectRatio = img.width / img.height;
+          if (_widthController.text.isEmpty && _heightController.text.isEmpty) {
+            _widthController.text = img.width.toString();
+            _heightController.text = img.height.toString();
+            _settings = _settings.copyWith(
+              customWidth: img.width,
+              customHeight: img.height,
+            );
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -217,6 +245,7 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
             // Target File Size Section
             _buildSection(
               title: 'Target size (max limit)',
+              subtitle: !_enableSizeTarget ? '< 40 KB' : null,
               icon: Icons.compress_rounded,
               trailing: Switch(
                 value: _enableSizeTarget,
@@ -311,8 +340,10 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
               if (trailing != null) trailing,
             ],
           ),
-          const SizedBox(height: 16),
-          child,
+          if (child is! SizedBox) ...[
+            const SizedBox(height: 16),
+            child,
+          ],
         ],
       ),
     );
@@ -613,7 +644,7 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
                 controller: _widthController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: 'Width (${_selectedResizeUnit})',
+                  labelText: 'Width ($_selectedResizeUnit)',
                   hintText: 'Width',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -623,16 +654,34 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
                     vertical: 14,
                   ),
                 ),
-                onChanged: _updateDimensions,
+                onChanged: (val) => _updateDimensions(val, fromWidth: true),
               ),
             ),
             const SizedBox(width: 12),
             GestureDetector(
               onTap: () {
                 setState(() {
+                  final newLock = !_settings.lockAspectRatio;
                   _settings = _settings.copyWith(
-                    lockAspectRatio: !_settings.lockAspectRatio,
+                    lockAspectRatio: newLock,
                   );
+                  if (newLock) {
+                    if (_originalAspectRatio == null || _originalAspectRatio! <= 0) {
+                      final images = context.read<ImageSelectionBloc>().state.images;
+                      if (images.isNotEmpty && images.first.height > 0) {
+                        _originalAspectRatio = images.first.width / images.first.height;
+                      } else {
+                        final w = double.tryParse(_widthController.text);
+                        final h = double.tryParse(_heightController.text);
+                        if (w != null && h != null && h > 0) {
+                          _originalAspectRatio = w / h;
+                        }
+                      }
+                    }
+                    if (_originalAspectRatio != null && _originalAspectRatio! > 0) {
+                      _updateDimensions(_widthController.text, fromWidth: true);
+                    }
+                  }
                 });
               },
               child: Container(
@@ -659,7 +708,7 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
                 controller: _heightController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: 'Height (${_selectedResizeUnit})',
+                  labelText: 'Height ($_selectedResizeUnit)',
                   hintText: 'Height',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -669,7 +718,7 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
                     vertical: 14,
                   ),
                 ),
-                onChanged: _updateDimensions,
+                onChanged: (val) => _updateDimensions(val, fromHeight: true),
               ),
             ),
           ],
@@ -754,21 +803,45 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
     });
   }
 
-  void _updateDimensions(String _) {
-    double? width = double.tryParse(_widthController.text);
-    double? height = double.tryParse(_heightController.text);
+  void _updateDimensions(String _, {bool fromWidth = false, bool fromHeight = false}) {
+    if (_isUpdatingDimensions) return;
+    _isUpdatingDimensions = true;
 
-    if (width != null) {
-      final pixels = _toPixels(width, _selectedResizeUnit);
-      _settings = _settings.copyWith(customWidth: pixels.round());
+    try {
+      double? width = double.tryParse(_widthController.text);
+      double? height = double.tryParse(_heightController.text);
+
+      // If aspect ratio is locked and we have a ratio, auto-calculate the other dimension
+      if (_settings.lockAspectRatio && _originalAspectRatio != null && _originalAspectRatio! > 0) {
+        if (fromWidth && width != null && width > 0) {
+          final widthPx = _toPixels(width, _selectedResizeUnit);
+          final heightPx = widthPx / _originalAspectRatio!;
+          final heightInUnit = _fromPixels(heightPx, _selectedResizeUnit);
+          _heightController.text = heightInUnit.toStringAsFixed(_selectedResizeUnit == 'px' ? 0 : 2);
+          height = heightInUnit;
+        } else if (fromHeight && height != null && height > 0) {
+          final heightPx = _toPixels(height, _selectedResizeUnit);
+          final widthPx = heightPx * _originalAspectRatio!;
+          final widthInUnit = _fromPixels(widthPx, _selectedResizeUnit);
+          _widthController.text = widthInUnit.toStringAsFixed(_selectedResizeUnit == 'px' ? 0 : 2);
+          width = widthInUnit;
+        }
+      }
+
+      if (width != null) {
+        final pixels = _toPixels(width, _selectedResizeUnit);
+        _settings = _settings.copyWith(customWidth: pixels.round());
+      }
+
+      if (height != null) {
+        final pixels = _toPixels(height, _selectedResizeUnit);
+        _settings = _settings.copyWith(customHeight: pixels.round());
+      }
+
+      setState(() {});
+    } finally {
+      _isUpdatingDimensions = false;
     }
-    
-    if (height != null) {
-      final pixels = _toPixels(height, _selectedResizeUnit);
-      _settings = _settings.copyWith(customHeight: pixels.round());
-    }
-    
-    setState(() {});
   }
 
   double _toPixels(double value, String unit) {
@@ -1000,7 +1073,23 @@ class _PhotoSettingsScreenState extends State<PhotoSettingsScreen> {
     final customName = _nameCtrl.text.trim();
 
     // Build final settings with target size if enabled
-    ImageSettings finalSettings = _settings.copyWith(customFileName: customName);
+    ImageSettings finalSettings = _settings.copyWith(
+      customFileName: customName,
+      batchMode: false,
+    );
+
+    if (_settings.resizeMode == ResizeMode.custom) {
+      final w = double.tryParse(_widthController.text);
+      final h = double.tryParse(_heightController.text);
+      if (w != null && w > 0 && h != null && h > 0) {
+        final wPx = _toPixels(w, _selectedResizeUnit).round();
+        final hPx = _toPixels(h, _selectedResizeUnit).round();
+        finalSettings = finalSettings.copyWith(
+          customWidth: wPx,
+          customHeight: hPx,
+        );
+      }
+    }
 
     if (_enableSizeTarget) {
       finalSettings = finalSettings.copyWith(

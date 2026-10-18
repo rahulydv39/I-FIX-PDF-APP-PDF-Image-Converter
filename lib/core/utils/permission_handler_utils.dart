@@ -86,10 +86,15 @@ class PermissionHandlerUtils {
   ///
   /// Returns `true` if permission is granted, `false` otherwise.
   static Future<bool> requestStoragePermission(BuildContext context) async {
-    // On Android 13+ the system photo picker handles its own
-    // access — we may not need a permission at all. But we still
-    // guard with READ_MEDIA_IMAGES for apps that access file paths
-    // directly (which this app does via image_picker path returns).
+    // On Android 13+ (API 33+) the system photo picker handles its own
+    // access per user-selected photo — no broad storage permission is needed.
+    if (Platform.isAndroid) {
+      final deviceInfo = DeviceInfoPlugin();
+      final androidInfo = await deviceInfo.androidInfo;
+      if (androidInfo.version.sdkInt >= 33) {
+        return true;
+      }
+    }
 
     final permission = await _storagePermission();
     final status = await permission.status;

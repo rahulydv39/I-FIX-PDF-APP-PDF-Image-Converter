@@ -22,32 +22,69 @@ class AppSettingsService {
     await prefs.setBool(_keyNotificationsEnabled, enabled);
   }
 
-  /// Get app storage usage in bytes
+  /// Get app storage usage in bytes across all app-managed directories
   Future<int> getStorageUsage() async {
+    final visitedPaths = <String>{};
+    int totalSize = 0;
+
+    final directoriesToScan = <Directory>[];
+
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      return await _getDirectorySize(directory);
-    } catch (e) {
-      return 0;
+      final docDir = await getApplicationDocumentsDirectory();
+      directoriesToScan.add(docDir);
+    } catch (_) {}
+
+    try {
+      final supportDir = await getApplicationSupportDirectory();
+      directoriesToScan.add(supportDir);
+    } catch (_) {}
+
+    if (Platform.isAndroid) {
+      try {
+        final externalDir = await getExternalStorageDirectory();
+        if (externalDir != null) {
+          directoriesToScan.add(externalDir);
+        }
+      } catch (_) {}
     }
+
+    for (final directory in directoriesToScan) {
+      totalSize += await _getDirectorySize(directory, visitedPaths);
+    }
+
+    return totalSize;
   }
 
-  /// Calculate directory size recursively
-  Future<int> _getDirectorySize(Directory directory) async {
+  /// Calculate directory size recursively avoiding duplicate paths
+  Future<int> _getDirectorySize(
+    Directory directory,
+    Set<String> visitedPaths,
+  ) async {
     int totalSize = 0;
-    
+
     try {
       if (await directory.exists()) {
-        await for (var entity in directory.list(recursive: true, followLinks: false)) {
-          if (entity is File) {
-            totalSize += await entity.length();
+        await for (var entity in directory.list(
+          recursive: true,
+          followLinks: false,
+        )) {
+          try {
+            if (entity is File) {
+              if (visitedPaths.add(entity.path)) {
+                if (await entity.exists()) {
+                  totalSize += await entity.length();
+                }
+              }
+            }
+          } catch (_) {
+            // Skip inaccessible or vanished file
           }
         }
       }
-    } catch (e) {
-      // Ignore errors
+    } catch (_) {
+      // Inaccessible directory
     }
-    
+
     return totalSize;
   }
 
